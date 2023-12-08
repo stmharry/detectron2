@@ -90,8 +90,12 @@ class SemSegEvaluator(DatasetEvaluator):
         self.sem_seg_loading_fn = sem_seg_loading_fn
         self._num_classes = len(meta.stuff_classes)
         if num_classes is not None:
-            assert self._num_classes == num_classes, f"{self._num_classes} != {num_classes}"
-        self._ignore_label = ignore_label if ignore_label is not None else meta.ignore_label
+            assert (
+                self._num_classes == num_classes
+            ), f"{self._num_classes} != {num_classes}"
+        self._ignore_label = (
+            ignore_label if ignore_label is not None else meta.ignore_label
+        )
 
         # This is because cv2.erode did not work for int datatype. Only works for uint8.
         self._compute_boundary_iou = True
@@ -111,7 +115,9 @@ class SemSegEvaluator(DatasetEvaluator):
             )
 
     def reset(self):
-        self._conf_matrix = np.zeros((self._num_classes + 1, self._num_classes + 1), dtype=np.int64)
+        self._conf_matrix = np.zeros(
+            (self._num_classes + 1, self._num_classes + 1), dtype=np.int64
+        )
         self._b_conf_matrix = np.zeros(
             (self._num_classes + 1, self._num_classes + 1), dtype=np.int64
         )
@@ -129,9 +135,9 @@ class SemSegEvaluator(DatasetEvaluator):
         """
         for input, output in zip(inputs, outputs):
             output = output["sem_seg"].argmax(dim=0).to(self._cpu_device)
-            pred = np.array(output, dtype=np.int)
+            pred = np.array(output, dtype=int)
             gt_filename = self.input_file_to_gt_file[input["file_name"]]
-            gt = self.sem_seg_loading_fn(gt_filename, dtype=np.int)
+            gt = self.sem_seg_loading_fn(gt_filename, dtype=int)
 
             gt[gt == self._ignore_label] = self._num_classes
 
@@ -183,12 +189,12 @@ class SemSegEvaluator(DatasetEvaluator):
             with PathManager.open(file_path, "w") as f:
                 f.write(json.dumps(self._predictions))
 
-        acc = np.full(self._num_classes, np.nan, dtype=np.float)
-        iou = np.full(self._num_classes, np.nan, dtype=np.float)
-        tp = self._conf_matrix.diagonal()[:-1].astype(np.float)
-        pos_gt = np.sum(self._conf_matrix[:-1, :-1], axis=0).astype(np.float)
+        acc = np.full(self._num_classes, np.nan, dtype=float)
+        iou = np.full(self._num_classes, np.nan, dtype=float)
+        tp = self._conf_matrix.diagonal()[:-1].astype(float)
+        pos_gt = np.sum(self._conf_matrix[:-1, :-1], axis=0).astype(float)
         class_weights = pos_gt / np.sum(pos_gt)
-        pos_pred = np.sum(self._conf_matrix[:-1, :-1], axis=1).astype(np.float)
+        pos_pred = np.sum(self._conf_matrix[:-1, :-1], axis=1).astype(float)
         acc_valid = pos_gt > 0
         acc[acc_valid] = tp[acc_valid] / pos_gt[acc_valid]
         union = pos_gt + pos_pred - tp
@@ -200,10 +206,10 @@ class SemSegEvaluator(DatasetEvaluator):
         pacc = np.sum(tp) / np.sum(pos_gt)
 
         if self._compute_boundary_iou:
-            b_iou = np.full(self._num_classes, np.nan, dtype=np.float)
-            b_tp = self._b_conf_matrix.diagonal()[:-1].astype(np.float)
-            b_pos_gt = np.sum(self._b_conf_matrix[:-1, :-1], axis=0).astype(np.float)
-            b_pos_pred = np.sum(self._b_conf_matrix[:-1, :-1], axis=1).astype(np.float)
+            b_iou = np.full(self._num_classes, np.nan, dtype=float)
+            b_tp = self._b_conf_matrix.diagonal()[:-1].astype(float)
+            b_pos_gt = np.sum(self._b_conf_matrix[:-1, :-1], axis=0).astype(float)
+            b_pos_pred = np.sum(self._b_conf_matrix[:-1, :-1], axis=1).astype(float)
             b_union = b_pos_gt + b_pos_pred - b_tp
             b_iou_valid = b_union > 0
             b_iou[b_iou_valid] = b_tp[b_iou_valid] / b_union[b_iou_valid]
@@ -239,7 +245,9 @@ class SemSegEvaluator(DatasetEvaluator):
             if self._contiguous_id_to_dataset_id is not None:
                 assert (
                     label in self._contiguous_id_to_dataset_id
-                ), "Label {} is not in the metadata info for {}".format(label, self._dataset_name)
+                ), "Label {} is not in the metadata info for {}".format(
+                    label, self._dataset_name
+                )
                 dataset_id = self._contiguous_id_to_dataset_id[label]
             else:
                 dataset_id = int(label)
@@ -247,7 +255,11 @@ class SemSegEvaluator(DatasetEvaluator):
             mask_rle = mask_util.encode(np.array(mask[:, :, None], order="F"))[0]
             mask_rle["counts"] = mask_rle["counts"].decode("utf-8")
             json_list.append(
-                {"file_name": input_file_name, "category_id": dataset_id, "segmentation": mask_rle}
+                {
+                    "file_name": input_file_name,
+                    "category_id": dataset_id,
+                    "segmentation": mask_rle,
+                }
             )
         return json_list
 

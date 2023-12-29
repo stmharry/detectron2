@@ -105,18 +105,24 @@ class DeepLabV3PlusHead(nn.Module):
 
             if idx == len(self.in_features) - 1:
                 # ASPP module
-                if train_size is not None:
-                    train_h, train_w = train_size
-                    encoder_stride = in_strides[-1]
-                    if train_h % encoder_stride or train_w % encoder_stride:
-                        raise ValueError(
-                            "Crop size need to be divisible by encoder stride."
-                        )
-                    pool_h = train_h // encoder_stride
-                    pool_w = train_w // encoder_stride
-                    pool_kernel_size = (pool_h, pool_w)
-                else:
-                    pool_kernel_size = None
+
+                # NOTE(stmharry): below is commented out because we want use `pool_kernel_size` == None
+
+                # if train_size is not None:
+                #     train_h, train_w = train_size
+                #     encoder_stride = in_strides[-1]
+                #     if train_h % encoder_stride or train_w % encoder_stride:
+                #         raise ValueError(
+                #             "Crop size need to be divisible by encoder stride."
+                #         )
+                #     pool_h = train_h // encoder_stride
+                #     pool_w = train_w // encoder_stride
+                #     pool_kernel_size = (pool_h, pool_w)
+                # else:
+                #     pool_kernel_size = None
+
+                pool_kernel_size = None
+
                 project_conv = ASPP(
                     in_channel,
                     aspp_channels,

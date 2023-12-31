@@ -44,7 +44,13 @@ def build_sem_seg_train_aug(cfg):
                 cfg.MODEL.SEM_SEG_HEAD.IGNORE_VALUE,
             )
         )
-    augs.append(T.RandomFlip())
+    if cfg.INPUT.RANDOM_FLIP != "none":
+        augs.append(
+            T.RandomFlip(
+                horizontal=cfg.INPUT.RANDOM_FLIP == "horizontal",
+                vertical=cfg.INPUT.RANDOM_FLIP == "vertical",
+            )
+        )
     return augs
 
 

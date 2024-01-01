@@ -75,7 +75,7 @@ class SemSegEvaluator(DatasetEvaluator):
         self._cpu_device = torch.device("cpu")
 
         self.input_file_to_gt_file = {
-            dataset_record["file_name"]: dataset_record["sem_seg_file_name"]
+            dataset_record["file_name"]: dataset_record.get("sem_seg_file_name")
             for dataset_record in DatasetCatalog.get(dataset_name)
         }
 
@@ -137,23 +137,24 @@ class SemSegEvaluator(DatasetEvaluator):
             output = output["sem_seg"].argmax(dim=0).to(self._cpu_device)
             pred = np.array(output, dtype=int)
             gt_filename = self.input_file_to_gt_file[input["file_name"]]
-            gt = self.sem_seg_loading_fn(gt_filename, dtype=int)
 
-            gt[gt == self._ignore_label] = self._num_classes
+            if gt_filename is not None:
+                gt = self.sem_seg_loading_fn(gt_filename, dtype=int)
+                gt[gt == self._ignore_label] = self._num_classes
 
-            self._conf_matrix += np.bincount(
-                (self._num_classes + 1) * pred.reshape(-1) + gt.reshape(-1),
-                minlength=self._conf_matrix.size,
-            ).reshape(self._conf_matrix.shape)
-
-            if self._compute_boundary_iou:
-                b_gt = self._mask_to_boundary(gt.astype(np.uint8))
-                b_pred = self._mask_to_boundary(pred.astype(np.uint8))
-
-                self._b_conf_matrix += np.bincount(
-                    (self._num_classes + 1) * b_pred.reshape(-1) + b_gt.reshape(-1),
+                self._conf_matrix += np.bincount(
+                    (self._num_classes + 1) * pred.reshape(-1) + gt.reshape(-1),
                     minlength=self._conf_matrix.size,
                 ).reshape(self._conf_matrix.shape)
+
+                if self._compute_boundary_iou:
+                    b_gt = self._mask_to_boundary(gt.astype(np.uint8))
+                    b_pred = self._mask_to_boundary(pred.astype(np.uint8))
+
+                    self._b_conf_matrix += np.bincount(
+                        (self._num_classes + 1) * b_pred.reshape(-1) + b_gt.reshape(-1),
+                        minlength=self._conf_matrix.size,
+                    ).reshape(self._conf_matrix.shape)
 
             self._predictions.extend(self.encode_json_sem_seg(pred, input["file_name"]))
 

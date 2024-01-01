@@ -1,4 +1,5 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
+from pathlib import Path
 import itertools
 import json
 import logging
@@ -133,9 +134,24 @@ class SemSegEvaluator(DatasetEvaluator):
                 (Tensor [H, W]) or list of dicts with key "sem_seg" that contains semantic
                 segmentation prediction in the same format.
         """
+        if self._output_dir:
+            PathManager.mkdirs(self._output_dir)
+
         for input, output in zip(inputs, outputs):
-            output = output["sem_seg"].argmax(dim=0).to(self._cpu_device)
-            pred = np.array(output, dtype=int)
+            logit = output["sem_seg"]
+
+            prob = logit.softmax(dim=0).to(self._cpu_device)
+            prob = np.asarray(prob * (2**16 - 1), dtype=np.uint16)
+
+            if self._output_dir:
+                prob_path: Path = Path(
+                    self._output_dir,
+                    Path(input["file_name"]).with_suffix(".npz").name,
+                )
+                np.savez_compressed(prob_path, prob=prob)
+
+            label = logit.argmax(dim=0).to(self._cpu_device)
+            pred = np.array(label, dtype=int)
             gt_filename = self.input_file_to_gt_file[input["file_name"]]
 
             if gt_filename is not None:

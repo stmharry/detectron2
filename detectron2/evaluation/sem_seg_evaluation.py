@@ -45,6 +45,7 @@ class SemSegEvaluator(DatasetEvaluator):
         dataset_name,
         distributed=True,
         output_dir=None,
+        save_prob=False,
         *,
         sem_seg_loading_fn=load_image_into_numpy_array,
         num_classes=None,
@@ -72,6 +73,7 @@ class SemSegEvaluator(DatasetEvaluator):
         self._dataset_name = dataset_name
         self._distributed = distributed
         self._output_dir = output_dir
+        self._save_prob = save_prob
 
         self._cpu_device = torch.device("cpu")
 
@@ -143,7 +145,7 @@ class SemSegEvaluator(DatasetEvaluator):
             prob = logit.softmax(dim=0).to(self._cpu_device)
             prob = np.asarray(prob * (2**16 - 1), dtype=np.uint16)
 
-            if self._output_dir:
+            if self._output_dir and self._save_prob:
                 prob_path: Path = Path(
                     self._output_dir,
                     Path(input["file_name"]).with_suffix(".npz").name,

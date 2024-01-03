@@ -79,6 +79,7 @@ class Trainer(DefaultTrainer):
                 dataset_name,
                 distributed=True,
                 output_dir=output_folder,
+                save_prob=cfg.TEST.SAVE_PROB,
             )
         if evaluator_type == "cityscapes_sem_seg":
             return CityscapesSemSegEvaluator(dataset_name)

@@ -26,3 +26,5 @@ def add_deeplab_config(cfg):
     cfg.MODEL.RESNETS.RES5_MULTI_GRID = [1, 2, 4]
     # ResNet stem type from: `basic`, `deeplab`
     cfg.MODEL.RESNETS.STEM_TYPE = "deeplab"
+
+    cfg.TEST.SAVE_PROB = False

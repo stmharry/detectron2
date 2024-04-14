@@ -83,6 +83,9 @@ class Trainer(DefaultTrainer):
             )
         if evaluator_type == "cityscapes_sem_seg":
             return CityscapesSemSegEvaluator(dataset_name)
+        if evaluator_type is None:
+            return None
+
         if len(evaluator_list) == 0:
             raise NotImplementedError(
                 "no Evaluator for the dataset {} with the type {}".format(
